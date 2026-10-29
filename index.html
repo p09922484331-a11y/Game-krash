@@ -46,9 +46,11 @@ h1 span{color:var(--lime)}
 .hud{position:absolute;top:12px;left:12px;right:12px;display:flex;justify-content:space-between;pointer-events:none}
 .hudBox{background:#09121bd9;border:1px solid #405260;border-radius:10px;padding:8px 11px;font-size:12px}
 .hudBox b{color:var(--lime)}
-.controls{display:flex;justify-content:space-between;gap:12px;margin-top:12px}
-.ctrl{width:50%;background:#172632;color:white;border:1px solid #38505e;border-radius:16px;padding:17px;font-size:22px;font-weight:bold;touch-action:none}
-.ctrl:active{background:#2c4351}
+.controls{display:grid;grid-template-columns:1fr 1.2fr 1fr;gap:8px;margin-top:12px}
+.ctrl{background:#172632;color:white;border:1px solid #38505e;border-radius:16px;padding:15px 5px;font-size:16px;font-weight:bold;touch-action:none;user-select:none}
+.ctrl:active,.ctrl.active{background:#2c4351;border-color:var(--lime)}
+.nitro{background:linear-gradient(145deg,#a5f4ff,#39b8ff)!important;color:#07141c!important;font-size:14px!important}
+.nitro.active{filter:brightness(1.2);box-shadow:0 0 18px #43e6ff88}
 .gameActions{display:flex;gap:8px;margin-top:10px}
 .gameActions button{flex:1}
 .message{color:var(--muted);font-size:12px;line-height:1.8;margin-top:10px}
@@ -105,9 +107,9 @@ h1 span{color:var(--lime)}
       <canvas id="gameCanvas" width="360" height="560"></canvas>
       <div class="hud"><div class="hudBox">امتیاز <b id="scoreHud">۰</b></div><div class="hudBox">🟡 <b id="coinsHud">۰</b></div></div>
     </div>
-    <div class="controls"><button class="ctrl" id="leftBtn">◀ چپ</button><button class="ctrl" id="rightBtn">راست ▶</button></div>
+    <div class="controls"><button class="ctrl" id="leftBtn">◀ چپ</button><button class="ctrl nitro" id="nitroBtn">⚡ نیترو</button><button class="ctrl" id="rightBtn">راست ▶</button></div>
     <div class="gameActions"><button class="secondary" onclick="pauseGame()">⏸ مکث</button><button class="secondary" onclick="goHome()">⌂ منو</button></div>
-    <div class="message">می‌توانی با دکمه‌ها یا لمس نیمه چپ و راست جاده، مسیر را عوض کنی.</div>
+    <div class="message">با کشیدن انگشت روی جاده موتور را آزادانه به چپ و راست ببر؛ با لمس کوتاه نیمه چپ یا راست هم تغییر مسیر بده. نیترو را نگه دار تا سرعت بگیری.</div>
   </section>
 
   <section id="shop" class="screen">
@@ -132,36 +134,65 @@ function refresh(){document.getElementById('bestStat').textContent=fa(state.best
 function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');state.screen=id;refresh()}
 function showShop(){show('shop')}
 function chooseBike(i){const costs=[0,500,1200,2000];if(!state.owned[i]){if(state.coins<costs[i]){alert('سکه کافی نداری! در مسابقه سکه جمع کن.');return}state.coins-=costs[i];state.owned[i]=true}state.bike=i;persist();refresh()}
-let ctx,raf=null,running=false,paused=false,track='day',last=0,elapsed=0,distance=0,score=0,runCoins=0,playerLane=1,obstacles=[],spawn=0,roadOffset=0;
+let ctx,raf=null,running=false,paused=false,track='day',last=0,elapsed=0,distance=0,score=0,runCoins=0,playerX=0,obstacles=[],spawn=0,roadOffset=0,nitro=false,nitroLeft=0,dragging=false,lastPointerX=0,roadCurve=0;
 const canvas=document.getElementById('gameCanvas');ctx=canvas.getContext('2d');
-function startGame(t){track=t;elapsed=0;distance=0;score=0;runCoins=0;playerLane=1;obstacles=[];spawn=0;roadOffset=0;paused=false;running=true;document.getElementById('trackTitle').textContent=t==='night'?'جاده شبانه':'بزرگراه شهری';show('game');last=performance.now();cancelAnimationFrame(raf);raf=requestAnimationFrame(loop)}
-function goHome(){running=false;paused=false;cancelAnimationFrame(raf);show('home')}
+function startGame(t){track=t;elapsed=0;distance=0;score=0;runCoins=0;playerX=0;obstacles=[];spawn=.6;roadOffset=0;paused=false;running=true;nitro=false;nitroLeft=3;roadCurve=0;document.getElementById('trackTitle').textContent=t==='night'?'جاده شبانه':'بزرگراه شهری';show('game');last=performance.now();cancelAnimationFrame(raf);raf=requestAnimationFrame(loop)}
+function goHome(){running=false;paused=false;nitro=false;cancelAnimationFrame(raf);show('home')}
 function pauseGame(){if(!running)return;paused=!paused;if(!paused){last=performance.now();raf=requestAnimationFrame(loop)}else{cancelAnimationFrame(raf);drawGame()}}
-function move(d){if(running&&!paused)playerLane=Math.max(0,Math.min(2,playerLane+d))}
+function move(d){if(running&&!paused)playerX=Math.max(-.88,Math.min(.88,playerX+d*.42))}
 document.getElementById('leftBtn').addEventListener('pointerdown',e=>{e.preventDefault();move(-1)});
 document.getElementById('rightBtn').addEventListener('pointerdown',e=>{e.preventDefault();move(1)});
-canvas.addEventListener('pointerdown',e=>{const r=canvas.getBoundingClientRect();move((e.clientX-r.left)<r.width/2?-1:1)});
-function roundedRect(x,y,w,h,r,fill){ctx.fillStyle=fill;ctx.beginPath();ctx.roundRect(x,y,w,h,r);ctx.fill()}
-function drawBike(x,y,color){ctx.save();ctx.translate(x,y);ctx.fillStyle='#080d11';ctx.beginPath();ctx.ellipse(0,13,13,22,0,0,Math.PI*2);ctx.fill();ctx.fillStyle=color;ctx.beginPath();ctx.moveTo(-14,8);ctx.lineTo(-10,-15);ctx.lineTo(0,-24);ctx.lineTo(11,-12);ctx.lineTo(14,10);ctx.lineTo(6,17);ctx.lineTo(-7,17);ctx.closePath();ctx.fill();ctx.fillStyle='#d9f5ff';ctx.fillRect(-5,-15,10,3);ctx.fillStyle='#17242e';ctx.fillRect(-7,2,14,8);ctx.restore()}
-function drawCar(x,y,color){roundedRect(x-17,y-29,34,58,8,color);roundedRect(x-12,y-19,24,18,5,'#b9e7f1');roundedRect(x-12,y+4,24,13,4,'#233746');ctx.fillStyle='#ffe77a';ctx.fillRect(x-14,y-27,7,4);ctx.fillRect(x+7,y-27,7,4);ctx.fillStyle='#111820';ctx.fillRect(x-20,y-17,5,12);ctx.fillRect(x+15,y-17,5,12);ctx.fillRect(x-20,y+13,5,12);ctx.fillRect(x+15,y+13,5,12)}
-function drawGame(){
- const w=canvas.width,h=canvas.height;ctx.clearRect(0,0,w,h);
- let night=track==='night';ctx.fillStyle=night?'#101a32':'#213b36';ctx.fillRect(0,0,w,h);
- // distant skyline
- for(let i=0;i<12;i++){let bx=i*34-10;ctx.fillStyle=night?'#172642':'#344e49';ctx.fillRect(bx,40+(i%3)*15,24,90);if(night){ctx.fillStyle='#f9db6c';for(let yy=50;yy<115;yy+=17)ctx.fillRect(bx+6,yy,3,5)}}
- ctx.fillStyle=night?'#303849':'#424a50';ctx.beginPath();ctx.moveTo(62,0);ctx.lineTo(298,0);ctx.lineTo(360,h);ctx.lineTo(0,h);ctx.closePath();ctx.fill();
- ctx.strokeStyle=night?'#d2a7ff':'#e9e2b0';ctx.lineWidth=3;ctx.setLineDash([22,19]);ctx.lineDashOffset=-roadOffset;for(let i=1;i<=2;i++){let x=62+i*78;ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo((x-62)/236*360+0,h);ctx.stroke()}ctx.setLineDash([]);
- ctx.strokeStyle=night?'#43e6ff':'#c9ff38';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(62,0);ctx.lineTo(0,h);ctx.moveTo(298,0);ctx.lineTo(360,h);ctx.stroke();
- obstacles.forEach(o=>{let x=62+(o.lane+.5)*(236/3);drawCar(x,o.y,o.color)});
- let px=62+(playerLane+.5)*(236/3);drawBike(px,h-85,['#c9ff38','#ff4d6d','#9c7bff','#43e6ff'][state.bike]);
- // bottom speed accent
- ctx.fillStyle='#0a121bd9';ctx.fillRect(12,h-43,112,28);ctx.fillStyle='#c9ff38';ctx.font='bold 13px Arial';ctx.fillText('SPEED '+Math.min(240,90+Math.floor(elapsed*2))+'',22,h-24);
+const nitroBtn=document.getElementById('nitroBtn');
+nitroBtn.addEventListener('pointerdown',e=>{e.preventDefault();nitro=true;nitroBtn.classList.add('active')});
+['pointerup','pointercancel','pointerleave'].forEach(ev=>nitroBtn.addEventListener(ev,()=>{nitro=false;nitroBtn.classList.remove('active')}));
+canvas.addEventListener('pointerdown',e=>{if(!running||paused)return;const r=canvas.getBoundingClientRect();const x=(e.clientX-r.left)/r.width;dragging=true;lastPointerX=e.clientX;if(x<.34)move(-1);else if(x>.66)move(1);try{canvas.setPointerCapture(e.pointerId)}catch(_){} });
+canvas.addEventListener('pointermove',e=>{if(!dragging||!running||paused)return;const r=canvas.getBoundingClientRect();const dx=(e.clientX-lastPointerX)/r.width;playerX=Math.max(-.88,Math.min(.88,playerX+dx*2.9));lastPointerX=e.clientX});
+['pointerup','pointercancel','pointerleave'].forEach(ev=>canvas.addEventListener(ev,()=>{dragging=false}));
+function roundedRect(x,y,w,h,r,fill){ctx.fillStyle=fill;ctx.beginPath();if(ctx.roundRect)ctx.roundRect(x,y,w,h,r);else ctx.rect(x,y,w,h);ctx.fill()}
+function roadAt(y){const t=y/canvas.height;const half=24+t*160;const center=180+Math.sin(roadCurve+t*1.15)*22*t;return {center,half,t}}
+function polygon(points,fill){ctx.fillStyle=fill;ctx.beginPath();ctx.moveTo(points[0][0],points[0][1]);for(let i=1;i<points.length;i++)ctx.lineTo(points[i][0],points[i][1]);ctx.closePath();ctx.fill()}
+function drawBike(x,y,scale,color,lean=0){ctx.save();ctx.translate(x,y);ctx.rotate(lean);ctx.scale(scale,scale);
+ // shadow
+ ctx.fillStyle='#05080bb8';ctx.beginPath();ctx.ellipse(0,14,22,36,0,0,Math.PI*2);ctx.fill();
+ // tires and frame
+ ctx.fillStyle='#080b0e';ctx.beginPath();ctx.ellipse(0,9,10,29,0,0,Math.PI*2);ctx.fill();ctx.strokeStyle='#8c9ca6';ctx.lineWidth=2;ctx.beginPath();ctx.ellipse(0,9,5,22,0,0,Math.PI*2);ctx.stroke();
+ ctx.strokeStyle='#b5c7cf';ctx.lineWidth=5;ctx.beginPath();ctx.moveTo(-9,0);ctx.lineTo(-15,-21);ctx.lineTo(0,-32);ctx.lineTo(15,-21);ctx.lineTo(9,0);ctx.stroke();
+ ctx.fillStyle=color;ctx.beginPath();ctx.moveTo(-15,-17);ctx.lineTo(-12,-34);ctx.lineTo(-6,-45);ctx.lineTo(6,-45);ctx.lineTo(13,-32);ctx.lineTo(15,-17);ctx.lineTo(8,-5);ctx.lineTo(-8,-5);ctx.closePath();ctx.fill();
+ ctx.fillStyle='#152631';ctx.beginPath();ctx.moveTo(-8,-36);ctx.lineTo(-4,-48);ctx.lineTo(5,-48);ctx.lineTo(10,-35);ctx.closePath();ctx.fill();
+ ctx.fillStyle='#baf5ff';ctx.beginPath();ctx.ellipse(0,-42,4,3,0,0,Math.PI*2);ctx.fill();
+ ctx.fillStyle='#1b2831';ctx.beginPath();ctx.ellipse(0,-25,8,11,0,0,Math.PI*2);ctx.fill();
+ // mirrors
+ ctx.strokeStyle='#d8e4e8';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(-10,-31);ctx.lineTo(-18,-39);ctx.moveTo(10,-31);ctx.lineTo(18,-39);ctx.stroke();
+ ctx.restore()}
+function drawCar(x,y,scale,color){ctx.save();ctx.translate(x,y);ctx.scale(scale,scale);ctx.fillStyle='#0008';ctx.beginPath();ctx.ellipse(0,13,23,39,0,0,Math.PI*2);ctx.fill();
+ roundedRect(-18,-29,36,61,8,color);roundedRect(-13,-21,26,19,5,'#9dd9e9');roundedRect(-13,3,26,14,4,'#233746');ctx.fillStyle='#fff0a1';ctx.fillRect(-15,-26,7,4);ctx.fillRect(8,-26,7,4);ctx.fillStyle='#ff4545';ctx.fillRect(-14,25,7,4);ctx.fillRect(7,25,7,4);ctx.fillStyle='#10161d';ctx.fillRect(-21,-17,5,13);ctx.fillRect(16,-17,5,13);ctx.fillRect(-21,13,5,13);ctx.fillRect(16,13,5,13);ctx.restore()}
+function drawGame(){const w=canvas.width,h=canvas.height;ctx.clearRect(0,0,w,h);const night=track==='night';
+ const sky=ctx.createLinearGradient(0,0,0,h);sky.addColorStop(0,night?'#111a38':'#80b6c9');sky.addColorStop(.42,night?'#273452':'#d5c5a0');sky.addColorStop(1,night?'#101a24':'#263c32');ctx.fillStyle=sky;ctx.fillRect(0,0,w,h);
+ // distant city and roadside
+ for(let i=0;i<15;i++){const bx=i*28-8;const bh=36+(i*19%56);ctx.fillStyle=night?'#17213a':'#607d7a';ctx.fillRect(bx,115-bh,21,bh);if(night){ctx.fillStyle=i%2?'#ffd879':'#59d9ef';for(let yy=120-bh;yy<111;yy+=13)ctx.fillRect(bx+5,yy,3,4)}}
+ // roadside shoulders
+ polygon([[0,190],[360,190],[360,h],[0,h]],night?'#14251f':'#405b42');
+ const topL=roadAt(120),botL=roadAt(h);polygon([[topL.center-topL.half,120],[topL.center+topL.half,120],[botL.center+botL.half,h],[botL.center-botL.half,h]],night?'#343b4b':'#454b51');
+ // asphalt texture bands
+ for(let i=0;i<18;i++){const y=((i*39+roadOffset*1.8)%h);const r=roadAt(y);ctx.fillStyle=night?'#ffffff08':'#ffffff09';ctx.fillRect(r.center-r.half,y,r.half*2,2)}
+ // edge strips and perspective lane markings
+ for(const side of [-1,1]){ctx.strokeStyle=night?'#45e9ff':'#e5e0b5';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(roadAt(120).center+side*roadAt(120).half,120);ctx.lineTo(roadAt(h).center+side*roadAt(h).half,h);ctx.stroke()}
+ for(let lane=1;lane<=2;lane++){for(let y=-50;y<h;y+=75){const yy=(y+roadOffset*2.2+h)%(h+75);const r=roadAt(yy);const x=r.center-r.half+2*r.half*lane/3;ctx.strokeStyle=night?'#d3c5ff':'#d7d7c8';ctx.lineWidth=1+yy/h*2;ctx.beginPath();ctx.moveTo(x,yy);ctx.lineTo(x,Math.min(h,yy+12+yy/h*22));ctx.stroke()}}
+ // roadside lights/reflectors
+ for(let y=150;y<h;y+=72){const yy=(y+roadOffset*1.7)%h;const r=roadAt(yy);for(const side of [-1,1]){ctx.fillStyle=night?'#43e6ff':'#c9ff38';ctx.fillRect(r.center+side*(r.half+7),yy,3+yy/h*2,6+yy/h*5)}}
+ // traffic rendered far-to-near
+ obstacles.sort((a,b)=>a.y-b.y);obstacles.forEach(o=>{const r=roadAt(o.y);const x=r.center-r.half+((o.lane+0.5)/3)*r.half*2;drawCar(x,o.y,0.28+0.8*r.t,o.color)});
+ const pr=roadAt(h-90);const px=pr.center+playerX*pr.half*.83;drawBike(px,h-90,0.8,['#c9ff38','#ff4d6d','#9c7bff','#43e6ff'][state.bike],-playerX*.22);
+ // speedometer HUD strip
+ ctx.fillStyle='#07111ddd';ctx.fillRect(12,h-43,150,30);ctx.fillStyle='#c9ff38';ctx.font='bold 13px Arial';ctx.fillText('SPEED '+Math.floor(95+elapsed*1.5+(nitro?70:0))+' KM/H',21,h-23);
+ if(nitro){ctx.fillStyle='#43e6ff';for(let i=0;i<7;i++){const x=px-17+i*5;ctx.fillRect(x,h-52-(i%3)*7,2,18+(i%3)*5)}}
 }
-function endGame(){running=false;cancelAnimationFrame(raf);state.coins+=runCoins;state.best=Math.max(state.best,Math.floor(distance));persist();refresh();drawGame();setTimeout(()=>alert('مسابقه تمام شد!\\nمسافت: '+fa(distance)+' متر\\nسکه‌های به‌دست‌آمده: '+fa(runCoins)+'\\nبرای تلاش دوباره «شروع مسابقه» را بزن.'),80)}
-function loop(now){if(!running||paused)return;let dt=Math.min(.035,(now-last)/1000);last=now;elapsed+=dt;distance+=dt*22;score=Math.floor(distance);roadOffset=(roadOffset+dt*190)%41;spawn-=dt;if(spawn<=0){obstacles.push({lane:Math.floor(Math.random()*3),y:-40,color:['#f15b5b','#3f9fe8','#f5a742','#d6e0e8'][Math.floor(Math.random()*4)],passed:false});spawn=Math.max(.45,1.1-elapsed*.008)}obstacles.forEach(o=>{o.y+=dt*(190+Math.min(130,elapsed*2));if(!o.passed&&o.y>canvas.height-100){o.passed=true;runCoins+=2}});obstacles=obstacles.filter(o=>o.y<canvas.height+50);
- let hit=obstacles.some(o=>o.lane===playerLane&&o.y>canvas.height-130&&o.y<canvas.height-47);
- if(Math.random()<dt*.32){runCoins+=1}
- document.getElementById('scoreHud').textContent=fa(score);document.getElementById('coinsHud').textContent=fa(runCoins);drawGame();if(hit){endGame();return}raf=requestAnimationFrame(loop)}
+function endGame(){running=false;nitro=false;nitroBtn.classList.remove('active');cancelAnimationFrame(raf);state.coins+=runCoins;state.best=Math.max(state.best,Math.floor(distance));persist();refresh();drawGame();setTimeout(()=>alert('مسابقه تمام شد!\nمسافت: '+fa(distance)+' متر\nسکه‌های به‌دست‌آمده: '+fa(runCoins)+'\nبرای تلاش دوباره از منو شروع کن.'),80)}
+function loop(now){if(!running||paused)return;let dt=Math.min(.035,(now-last)/1000);last=now;elapsed+=dt;const speed=nitro?1.65:1;distance+=dt*22*speed;score=Math.floor(distance);roadOffset=(roadOffset+dt*(150+Math.min(190,elapsed*2.2))*(nitro?1.65:1))%100;roadCurve+=dt*.08;spawn-=dt*(nitro?1.3:1);
+ if(spawn<=0){const lane=Math.floor(Math.random()*3);obstacles.push({lane,y:115,color:['#e65059','#3f9fe8','#f5a742','#d6e0e8','#8d72c9'][Math.floor(Math.random()*5)],passed:false});spawn=Math.max(.48,1.25-elapsed*.006)*(nitro?0.88:1)}
+ const trafficSpeed=nitro?245:185;obstacles.forEach(o=>{o.y+=dt*(trafficSpeed+Math.min(95,elapsed*1.3));if(!o.passed&&o.y>canvas.height-120){o.passed=true;runCoins+=2}});obstacles=obstacles.filter(o=>o.y<canvas.height+70);
+ const pr=roadAt(canvas.height-90);const px=pr.center+playerX*pr.half*.83;const hit=obstacles.some(o=>{const r=roadAt(o.y);const ox=r.center-r.half+((o.lane+.5)/3)*r.half*2;return o.y>canvas.height-145&&o.y<canvas.height-65&&Math.abs(ox-px)<(24+o.y/canvas.height*15)});
+ if(Math.random()<dt*.22)runCoins+=1;document.getElementById('scoreHud').textContent=fa(score);document.getElementById('coinsHud').textContent=fa(runCoins);drawGame();if(hit){endGame();return}raf=requestAnimationFrame(loop)}
 refresh();
 </script>
 </body>
