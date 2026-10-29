@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="theme-color" content="#101820">
+<title>MOTO RUSH</title>
+<style>
+:root{--bg:#0b1118;--panel:#131e29;--lime:#c9ff38;--cyan:#43e6ff;--white:#f3f7fb;--muted:#9baaba}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:radial-gradient(circle at 50% -10%,#263b4b 0,#0b1118 58%);color:var(--white);font-family:Tahoma,Arial,sans-serif;min-height:100vh;overflow-x:hidden}
+button{font:inherit;cursor:pointer;border:0}
+.app{max-width:760px;margin:auto;padding:16px 14px 26px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.brand{font-size:12px;letter-spacing:3px;color:var(--cyan);font-weight:bold}
+h1{margin:5px 0 0;font-size:32px;font-style:italic;letter-spacing:1px}
+h1 span{color:var(--lime)}
+.pill{border:1px solid #354757;border-radius:999px;padding:9px 12px;color:var(--muted);font-size:12px}
+.hero{margin-top:17px;position:relative;border:1px solid #314453;border-radius:22px;overflow:hidden;background:linear-gradient(135deg,#182b36,#0d151e 70%);min-height:230px}
+.hero:before{content:"";position:absolute;inset:0;background:linear-gradient(120deg,transparent 15%,#43e6ff0c 50%,transparent 80%);pointer-events:none}
+.heroLabel{position:absolute;top:17px;right:17px;z-index:2}
+.heroLabel b{display:block;font-size:11px;letter-spacing:2px;color:var(--lime)}
+.heroLabel strong{display:block;font-size:23px;margin-top:7px}
+.heroLabel small{color:var(--muted);display:block;margin-top:5px}
+.bikeArt{width:100%;height:240px;display:block}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-top:12px}
+.stat{background:#111b25;border:1px solid #263746;border-radius:15px;padding:12px 9px}
+.stat small{color:var(--muted);font-size:11px}
+.stat strong{display:block;margin-top:6px;font-size:18px}
+.sectionTitle{display:flex;align-items:center;justify-content:space-between;margin:23px 2px 11px}
+.sectionTitle h2{font-size:17px;margin:0}
+.sectionTitle span{font-size:11px;color:var(--muted)}
+.modes{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.mode{background:linear-gradient(145deg,#172632,#101820);border:1px solid #304554;border-radius:17px;padding:15px;text-align:right;color:var(--white);min-height:105px}
+.mode .icon{font-size:25px}
+.mode strong{display:block;margin-top:9px}
+.mode small{color:var(--muted);display:block;margin-top:5px}
+.primary{width:100%;margin-top:13px;background:var(--lime);color:#10170a;font-weight:900;padding:15px;border-radius:14px;box-shadow:0 6px 0 #789b17}
+.primary:active{transform:translateY(2px);box-shadow:0 4px 0 #789b17}
+.secondary{background:#1b2a36;border:1px solid #344a5b;color:var(--white);border-radius:12px;padding:11px 13px}
+.footer{text-align:center;color:#647585;font-size:10px;margin-top:22px;letter-spacing:1px}
+.screen{display:none}
+.screen.active{display:block}
+.gameShell{margin-top:15px;position:relative;border-radius:20px;overflow:hidden;border:1px solid #304554;background:#101820}
+#gameCanvas{display:block;width:100%;height:auto;touch-action:none}
+.hud{position:absolute;top:12px;left:12px;right:12px;display:flex;justify-content:space-between;pointer-events:none}
+.hudBox{background:#09121bd9;border:1px solid #405260;border-radius:10px;padding:8px 11px;font-size:12px}
+.hudBox b{color:var(--lime)}
+.controls{display:flex;justify-content:space-between;gap:12px;margin-top:12px}
+.ctrl{width:50%;background:#172632;color:white;border:1px solid #38505e;border-radius:16px;padding:17px;font-size:22px;font-weight:bold;touch-action:none}
+.ctrl:active{background:#2c4351}
+.gameActions{display:flex;gap:8px;margin-top:10px}
+.gameActions button{flex:1}
+.message{color:var(--muted);font-size:12px;line-height:1.8;margin-top:10px}
+.shopGrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.bikeCard{border:1px solid #2d4251;background:#121e28;border-radius:16px;padding:12px}
+.bikeCard .mini{height:68px;display:grid;place-items:center;font-size:35px}
+.bikeCard strong{display:block}
+.bikeCard small{display:block;color:var(--muted);margin-top:5px}
+.bikeCard button{margin-top:10px;width:100%;padding:10px;border-radius:10px;background:#273a47;color:white}
+.bikeCard button.selected{background:var(--lime);color:#111}
+.note{border:1px solid #2e4653;background:#111e28;border-radius:14px;padding:13px;color:#b9c7d4;font-size:12px;line-height:1.9;margin-top:14px}
+@media(min-width:600px){.hero{min-height:260px}.bikeArt{height:270px}.stats{gap:12px}}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="top">
+    <div><div class="brand">RIDE YOUR LIMITS</div><h1>MOTO <span>RUSH</span></h1></div>
+    <div class="pill">نسخه آزمایشی ۰.۱</div>
+  </div>
+
+  <section id="home" class="screen active">
+    <div class="hero">
+      <div class="heroLabel"><b>STREET SERIES</b><strong>آماده‌ای؟</strong><small>گاز بده، جاخالی بده، رکورد بزن.</small></div>
+      <svg class="bikeArt" viewBox="0 0 600 280" role="img" aria-label="تصویر گرافیکی موتور مسابقه‌ای">
+        <defs><linearGradient id="body" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#e9ff73"/><stop offset=".55" stop-color="#b5f322"/><stop offset="1" stop-color="#4c8e22"/></linearGradient><linearGradient id="metal"><stop stop-color="#a9c4d2"/><stop offset="1" stop-color="#344957"/></linearGradient></defs>
+        <circle cx="192" cy="211" r="48" fill="#080d12" stroke="#536a77" stroke-width="5"/><circle cx="192" cy="211" r="26" fill="#17242e" stroke="#9cb1bd" stroke-width="4"/><circle cx="420" cy="211" r="48" fill="#080d12" stroke="#536a77" stroke-width="5"/><circle cx="420" cy="211" r="26" fill="#17242e" stroke="#9cb1bd" stroke-width="4"/>
+        <path d="M192 211 L265 145 L326 211 L250 211 Z" fill="none" stroke="url(#metal)" stroke-width="11" stroke-linejoin="round"/><path d="M326 211 L374 145 L420 211" fill="none" stroke="url(#metal)" stroke-width="10" stroke-linejoin="round"/>
+        <path d="M255 146 Q280 116 323 127 L372 148 L345 169 L287 168 Z" fill="url(#body)" stroke="#dfff75" stroke-width="2"/><path d="M283 128 L302 103 L343 107 L365 137 L323 132 Z" fill="#243746"/><path d="M301 105 L338 108 L351 124 L307 120 Z" fill="#58d9ed"/>
+        <path d="M362 147 L411 145 L432 159 L414 169 L365 164 Z" fill="#d7e4eb"/><path d="M411 145 L439 143 L453 152 L430 159 Z" fill="#43e6ff"/><path d="M367 148 L394 129 L421 133" fill="none" stroke="#a9c4d2" stroke-width="7" stroke-linecap="round"/>
+        <path d="M244 146 L222 131 L202 132" fill="none" stroke="#b7cbd4" stroke-width="8" stroke-linecap="round"/><path d="M270 151 L241 173 L277 184 L308 164" fill="#1c2a35" stroke="#77909d" stroke-width="3"/>
+        <path d="M295 168 L326 211 L356 211" fill="none" stroke="#c9ff38" stroke-width="5"/><path d="M179 265 H459" stroke="#43e6ff" stroke-width="2" opacity=".35"/><path d="M90 248 H175 M455 248 H520" stroke="#c9ff38" stroke-width="3" opacity=".6"/>
+        <path d="M80 85 H190 M110 101 H210 M420 72 H510" stroke="#43e6ff" stroke-width="2" opacity=".35"/>
+      </svg>
+    </div>
+    <div class="stats">
+      <div class="stat"><small>بهترین رکورد</small><strong id="bestStat">۰ متر</strong></div>
+      <div class="stat"><small>سکه‌ها</small><strong id="coinStat">۰ 🟡</strong></div>
+      <div class="stat"><small>موتور فعال</small><strong id="bikeStat">Street 01</strong></div>
+    </div>
+    <div class="sectionTitle"><h2>انتخاب مسیر</h2><span>نسخه آزمایشی</span></div>
+    <div class="modes">
+      <button class="mode" onclick="startGame('day')"><span class="icon">🌆</span><strong>بزرگراه شهری</strong><small>مسیر روز · ترافیک</small></button>
+      <button class="mode" onclick="startGame('night')"><span class="icon">🌙</span><strong>جاده شبانه</strong><small>نورهای نئونی · سرعت</small></button>
+    </div>
+    <button class="primary" onclick="startGame('day')">▶ شروع مسابقه</button>
+    <button class="secondary" style="width:100%;margin-top:12px" onclick="showShop()">🏍️ گاراژ و موتور‌ها</button>
+    <div class="note">راهنما: در مسابقه با دکمه‌های چپ و راست بین خط‌ها حرکت کن و از ماشین‌ها دوری کن. هرچه بیشتر دوام بیاوری، امتیازت بالاتر می‌رود.</div>
+  </section>
+
+  <section id="game" class="screen">
+    <div class="sectionTitle"><h2 id="trackTitle">بزرگراه شهری</h2><span>از برخورد دوری کن!</span></div>
+    <div class="gameShell">
+      <canvas id="gameCanvas" width="360" height="560"></canvas>
+      <div class="hud"><div class="hudBox">امتیاز <b id="scoreHud">۰</b></div><div class="hudBox">🟡 <b id="coinsHud">۰</b></div></div>
+    </div>
+    <div class="controls"><button class="ctrl" id="leftBtn">◀ چپ</button><button class="ctrl" id="rightBtn">راست ▶</button></div>
+    <div class="gameActions"><button class="secondary" onclick="pauseGame()">⏸ مکث</button><button class="secondary" onclick="goHome()">⌂ منو</button></div>
+    <div class="message">می‌توانی با دکمه‌ها یا لمس نیمه چپ و راست جاده، مسیر را عوض کنی.</div>
+  </section>
+
+  <section id="shop" class="screen">
+    <div class="sectionTitle"><h2>گاراژ موتور‌ها</h2><span id="shopCoins">۰ سکه</span></div>
+    <div class="shopGrid">
+      <div class="bikeCard"><div class="mini">🏍️</div><strong>Street 01</strong><small>موتور شروع · متعادل</small><button id="choose0" onclick="chooseBike(0)">موتور فعال</button></div>
+      <div class="bikeCard"><div class="mini">🏍️💨</div><strong>Racer X</strong><small>ظاهر مسابقه‌ای · سرعت بالا</small><button id="choose1" onclick="chooseBike(1)">۵۰۰ سکه</button></div>
+      <div class="bikeCard"><div class="mini">🏁🏍️</div><strong>Night Wolf</strong><small>ویژه مسیر شب</small><button id="choose2" onclick="chooseBike(2)">۱۲۰۰ سکه</button></div>
+      <div class="bikeCard"><div class="mini">⚡🏍️</div><strong>Volt GT</strong><small>مدل آینده‌نگر</small><button id="choose3" onclick="chooseBike(3)">۲۰۰۰ سکه</button></div>
+    </div>
+    <button class="secondary" style="width:100%;margin-top:14px" onclick="goHome()">برگشت به منو</button>
+    <div class="note">این نسخه نمایشی است؛ سکه‌ها با بازی‌کردن به دست می‌آیند و خرید واقعی در این نمونه فعال نیست.</div>
+  </section>
+  <div class="footer">MOTO RUSH · MOBILE ARCADE PROTOTYPE</div>
+</div>
+<script>
+const fa=n=>Math.floor(n).toLocaleString('fa-IR');
+const state={coins:0,best:0,bike:0,owned:[true,false,false,false],screen:'home'};
+try{state.coins=+(localStorage.mrCoins||0);state.best=+(localStorage.mrBest||0);state.bike=+(localStorage.mrBike||0);state.owned=JSON.parse(localStorage.mrOwned||'[true,false,false,false]')}catch(e){}
+function persist(){try{localStorage.mrCoins=state.coins;localStorage.mrBest=state.best;localStorage.mrBike=state.bike;localStorage.mrOwned=JSON.stringify(state.owned)}catch(e){}}
+function refresh(){document.getElementById('bestStat').textContent=fa(state.best)+' متر';document.getElementById('coinStat').textContent=fa(state.coins)+' 🟡';document.getElementById('bikeStat').textContent=['Street 01','Racer X','Night Wolf','Volt GT'][state.bike];document.getElementById('shopCoins').textContent=fa(state.coins)+' سکه';for(let i=0;i<4;i++){let b=document.getElementById('choose'+i);b.className=state.bike===i?'selected':'';b.textContent=state.bike===i?'موتور فعال':state.owned[i]?'انتخاب موتور':['','۵۰۰ سکه','۱۲۰۰ سکه','۲۰۰۰ سکه'][i]}}
+function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');state.screen=id;refresh()}
+function showShop(){show('shop')}
+function chooseBike(i){const costs=[0,500,1200,2000];if(!state.owned[i]){if(state.coins<costs[i]){alert('سکه کافی نداری! در مسابقه سکه جمع کن.');return}state.coins-=costs[i];state.owned[i]=true}state.bike=i;persist();refresh()}
+let ctx,raf=null,running=false,paused=false,track='day',last=0,elapsed=0,distance=0,score=0,runCoins=0,playerLane=1,obstacles=[],spawn=0,roadOffset=0;
+const canvas=document.getElementById('gameCanvas');ctx=canvas.getContext('2d');
+function startGame(t){track=t;elapsed=0;distance=0;score=0;runCoins=0;playerLane=1;obstacles=[];spawn=0;roadOffset=0;paused=false;running=true;document.getElementById('trackTitle').textContent=t==='night'?'جاده شبانه':'بزرگراه شهری';show('game');last=performance.now();cancelAnimationFrame(raf);raf=requestAnimationFrame(loop)}
+function goHome(){running=false;paused=false;cancelAnimationFrame(raf);show('home')}
+function pauseGame(){if(!running)return;paused=!paused;if(!paused){last=performance.now();raf=requestAnimationFrame(loop)}else{cancelAnimationFrame(raf);drawGame()}}
+function move(d){if(running&&!paused)playerLane=Math.max(0,Math.min(2,playerLane+d))}
+document.getElementById('leftBtn').addEventListener('pointerdown',e=>{e.preventDefault();move(-1)});
+document.getElementById('rightBtn').addEventListener('pointerdown',e=>{e.preventDefault();move(1)});
+canvas.addEventListener('pointerdown',e=>{const r=canvas.getBoundingClientRect();move((e.clientX-r.left)<r.width/2?-1:1)});
+function roundedRect(x,y,w,h,r,fill){ctx.fillStyle=fill;ctx.beginPath();ctx.roundRect(x,y,w,h,r);ctx.fill()}
+function drawBike(x,y,color){ctx.save();ctx.translate(x,y);ctx.fillStyle='#080d11';ctx.beginPath();ctx.ellipse(0,13,13,22,0,0,Math.PI*2);ctx.fill();ctx.fillStyle=color;ctx.beginPath();ctx.moveTo(-14,8);ctx.lineTo(-10,-15);ctx.lineTo(0,-24);ctx.lineTo(11,-12);ctx.lineTo(14,10);ctx.lineTo(6,17);ctx.lineTo(-7,17);ctx.closePath();ctx.fill();ctx.fillStyle='#d9f5ff';ctx.fillRect(-5,-15,10,3);ctx.fillStyle='#17242e';ctx.fillRect(-7,2,14,8);ctx.restore()}
+function drawCar(x,y,color){roundedRect(x-17,y-29,34,58,8,color);roundedRect(x-12,y-19,24,18,5,'#b9e7f1');roundedRect(x-12,y+4,24,13,4,'#233746');ctx.fillStyle='#ffe77a';ctx.fillRect(x-14,y-27,7,4);ctx.fillRect(x+7,y-27,7,4);ctx.fillStyle='#111820';ctx.fillRect(x-20,y-17,5,12);ctx.fillRect(x+15,y-17,5,12);ctx.fillRect(x-20,y+13,5,12);ctx.fillRect(x+15,y+13,5,12)}
+function drawGame(){
+ const w=canvas.width,h=canvas.height;ctx.clearRect(0,0,w,h);
+ let night=track==='night';ctx.fillStyle=night?'#101a32':'#213b36';ctx.fillRect(0,0,w,h);
+ // distant skyline
+ for(let i=0;i<12;i++){let bx=i*34-10;ctx.fillStyle=night?'#172642':'#344e49';ctx.fillRect(bx,40+(i%3)*15,24,90);if(night){ctx.fillStyle='#f9db6c';for(let yy=50;yy<115;yy+=17)ctx.fillRect(bx+6,yy,3,5)}}
+ ctx.fillStyle=night?'#303849':'#424a50';ctx.beginPath();ctx.moveTo(62,0);ctx.lineTo(298,0);ctx.lineTo(360,h);ctx.lineTo(0,h);ctx.closePath();ctx.fill();
+ ctx.strokeStyle=night?'#d2a7ff':'#e9e2b0';ctx.lineWidth=3;ctx.setLineDash([22,19]);ctx.lineDashOffset=-roadOffset;for(let i=1;i<=2;i++){let x=62+i*78;ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo((x-62)/236*360+0,h);ctx.stroke()}ctx.setLineDash([]);
+ ctx.strokeStyle=night?'#43e6ff':'#c9ff38';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(62,0);ctx.lineTo(0,h);ctx.moveTo(298,0);ctx.lineTo(360,h);ctx.stroke();
+ obstacles.forEach(o=>{let x=62+(o.lane+.5)*(236/3);drawCar(x,o.y,o.color)});
+ let px=62+(playerLane+.5)*(236/3);drawBike(px,h-85,['#c9ff38','#ff4d6d','#9c7bff','#43e6ff'][state.bike]);
+ // bottom speed accent
+ ctx.fillStyle='#0a121bd9';ctx.fillRect(12,h-43,112,28);ctx.fillStyle='#c9ff38';ctx.font='bold 13px Arial';ctx.fillText('SPEED '+Math.min(240,90+Math.floor(elapsed*2))+'',22,h-24);
+}
+function endGame(){running=false;cancelAnimationFrame(raf);state.coins+=runCoins;state.best=Math.max(state.best,Math.floor(distance));persist();refresh();drawGame();setTimeout(()=>alert('مسابقه تمام شد!\\nمسافت: '+fa(distance)+' متر\\nسکه‌های به‌دست‌آمده: '+fa(runCoins)+'\\nبرای تلاش دوباره «شروع مسابقه» را بزن.'),80)}
+function loop(now){if(!running||paused)return;let dt=Math.min(.035,(now-last)/1000);last=now;elapsed+=dt;distance+=dt*22;score=Math.floor(distance);roadOffset=(roadOffset+dt*190)%41;spawn-=dt;if(spawn<=0){obstacles.push({lane:Math.floor(Math.random()*3),y:-40,color:['#f15b5b','#3f9fe8','#f5a742','#d6e0e8'][Math.floor(Math.random()*4)],passed:false});spawn=Math.max(.45,1.1-elapsed*.008)}obstacles.forEach(o=>{o.y+=dt*(190+Math.min(130,elapsed*2));if(!o.passed&&o.y>canvas.height-100){o.passed=true;runCoins+=2}});obstacles=obstacles.filter(o=>o.y<canvas.height+50);
+ let hit=obstacles.some(o=>o.lane===playerLane&&o.y>canvas.height-130&&o.y<canvas.height-47);
+ if(Math.random()<dt*.32){runCoins+=1}
+ document.getElementById('scoreHud').textContent=fa(score);document.getElementById('coinsHud').textContent=fa(runCoins);drawGame();if(hit){endGame();return}raf=requestAnimationFrame(loop)}
+refresh();
+</script>
+</body>
+</html>
